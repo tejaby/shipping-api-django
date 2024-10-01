@@ -17,6 +17,11 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
+from user.api.api import TokenObtainPairView, LogoutView
+
+
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/logout/', LogoutView.as_view(), name='logout'),
 ]
