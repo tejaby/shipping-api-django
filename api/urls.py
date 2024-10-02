@@ -24,5 +24,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/logout/', LogoutView.as_view(), name='logout'),
-    path('api/', include('locations.urls'))
+    path('api/', include('locations.urls')),
+    path('api/', include('shipments.urls'))
 ]
