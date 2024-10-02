@@ -1,7 +1,8 @@
 from rest_framework.generics import GenericAPIView
+from rest_framework.views import APIView
 
 from rest_framework.response import Response
-from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST
+from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
 
 from rest_framework.permissions import IsAuthenticated
 
@@ -25,15 +26,16 @@ class CreateShipmentView(GenericAPIView):
         if not all([order_number, recipient, destination, address, store]):
             return Response({"error": "Todos los parámetros son obligatorios."}, status=HTTP_400_BAD_REQUEST)
 
-        destino = Location.objects.get(id=destination)
-        if not destino:
+        try:
+            destino = Location.objects.get(id=destination)
+        except Location.DoesNotExist:
             return Response({"error": "Destino no encontrado."}, status=HTTP_400_BAD_REQUEST)
 
         shipment = Shipment.objects.create(
             order_number=order_number,
             weight=0.0,
             price=0.0,
-            status='Pending',
+            status='Pendiente',
             recipient=recipient,
             department=destino,
             address=address,
@@ -64,3 +66,53 @@ class UpdateShipmentView(GenericAPIView):
         serializer.save()
 
         return Response(serializer.data, status=HTTP_200_OK)
+
+
+class ShippingCostView(APIView):
+    def get(self, request, *args, **kwargs):
+        destination_code = request.query_params.get('destino')
+
+        if not destination_code:
+            return Response({"error": "Se requiere código de destino"}, status=HTTP_400_BAD_REQUEST)
+
+        try:
+            location = Location.objects.get(code=destination_code)
+        except Location.DoesNotExist:
+            return Response({"consultaprecio": {
+                            "courrier": '',
+                            'destino': '',
+                            'cobertura': False,
+                            'costo': ''
+                            }}, status=HTTP_404_NOT_FOUND)
+
+        return Response({'consultaprecio': {
+            "courrier": '',
+            'destino': location.name,
+            'cobertura': True,
+            'costo': location.price
+        }}, status=HTTP_200_OK)
+
+
+class OrderStatusView(APIView):
+    def get(self, request, *args, **kwargs):
+        order_number = request.query_params.get('orden')
+        store = request.query_params.get('tienda')
+
+        if not all([order_number, store]):
+            return Response({"error": "Se requieren los parámetros orden y tienda"}, status=HTTP_400_BAD_REQUEST)
+
+        try:
+            shipment = Shipment.objects.get(
+                order_number=order_number, store=store)
+        except Shipment.DoesNotExist:
+            return Response({'orden': {
+                'courrier': '',
+                'orden': '',
+                'status': '',
+            }}, status=HTTP_404_NOT_FOUND)
+
+        return Response({'orden': {
+            'courrier': '',
+            'orden': shipment.id,
+            'status': shipment.status,
+        }}, status=HTTP_200_OK)
