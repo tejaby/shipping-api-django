@@ -1,0 +1,4 @@
+distlib==0.3.8
+filelock==3.13.4
+platformdirs==4.2.1
+virtualenv==20.26.0
