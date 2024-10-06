@@ -1,12 +1,8 @@
-from rest_framework.generics import GenericAPIView
+from rest_framework.generics import GenericAPIView, ListAPIView
 from rest_framework.views import APIView
 
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
-
-from rest_framework.permissions import IsAuthenticated
-
-from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from .serializers import ShipmentSerializer
 
@@ -27,7 +23,7 @@ class CreateShipmentView(GenericAPIView):
             return Response({"error": "Todos los parámetros son obligatorios."}, status=HTTP_400_BAD_REQUEST)
 
         try:
-            destino = Location.objects.get(id=destination)
+            destino = Location.objects.get(code=destination)
         except Location.DoesNotExist:
             return Response({"error": "Destino no encontrado."}, status=HTTP_400_BAD_REQUEST)
 
@@ -49,8 +45,6 @@ class CreateShipmentView(GenericAPIView):
 class UpdateShipmentView(GenericAPIView):
     queryset = Shipment.objects.all()
     serializer_class = ShipmentSerializer
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
 
     def put(self, request, *args, **kwargs):
         status = request.data.get('status')
@@ -116,3 +110,8 @@ class OrderStatusView(APIView):
             'orden': shipment.id,
             'status': shipment.status,
         }}, status=HTTP_200_OK)
+
+
+class ShipmentListView (ListAPIView):
+    queryset = Shipment.objects.all()
+    serializer_class = ShipmentSerializer
